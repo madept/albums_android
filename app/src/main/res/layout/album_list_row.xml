@@ -6,12 +6,11 @@
     android:layout_height="wrap_content"
     android:layout_marginTop="5dp"
     android:background="@drawable/border"
-    android:orientation="horizontal"
     android:id="@+id/album_row">
 
     <TextView
         android:id="@+id/title"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="5dp"
         android:gravity="left|center_vertical"

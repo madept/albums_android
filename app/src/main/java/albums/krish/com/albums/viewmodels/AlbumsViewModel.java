@@ -1,6 +1,8 @@
 package albums.krish.com.albums.viewmodels;
 
 import android.app.Activity;
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.ViewModel;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -16,6 +18,7 @@ import com.android.volley.toolbox.Volley;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 import albums.krish.com.albums.Util.Constants;
 import albums.krish.com.albums.Util.JSONParser;
@@ -24,53 +27,59 @@ import albums.krish.com.albums.adp.AlbumsAdapter;
 import albums.krish.com.albums.models.Album;
 
 /**
- *  ViewModel, to implement MVVM so that activity load can we reduced ( no hard wired coupling which makes testing easy)
+ *  ViewModel, to implement MVVM . ViewModel notify its owner when it has updated data
  */
 
-public class AlbumsViewModel  {
+public class AlbumsViewModel extends ViewModel {
 
-     ArrayList<Album> albums;
-     RecyclerView albumsView;
+
      Activity context;
-     public AlbumsViewModel(Activity context,RecyclerView albumsView){
+     MutableLiveData<List<Album>> albums;
+     public AlbumsViewModel(){
+     }
+
+     public void setContext(Activity context){
          this.context = context ;
-         this.albumsView = albumsView ;
      }
 
     /**
-     *  Loads albums from network, if no netword try to load from load
+     *  Loads albums from network, if no netword try to load from local data
      */
-    public  void loadAlbums(){
-
+    public LiveData<List<Album>> getAlbums(){
+        if( albums == null)
+            albums = new MutableLiveData<List<Album>>();
         if(!Util.isNetworkAvailable(context)){
-            loadLocalData();
+            List<Album> albms = loadLocalData();
+            sortAlbums(albms);
+            albums.setValue(albms);
+
         }else{
             sendAlbumsRequest();
         }
 
-
+        return albums;
     }
 
-    private void updateAlbumList(){
-
-        AlbumsAdapter adp = new AlbumsAdapter(context,albums);
-        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(context);
-        albumsView.setLayoutManager(layoutManager);
-        albumsView.setAdapter(adp);
-    }
-
-    private  void loadLocalData(){
+    /**
+     * Loads local data, if no data then it returns empty list
+     * @return Album list loaded from local data
+     */
+    private  List<Album> loadLocalData(){
         String response = Util.getPersistanceData(context, Constants.ALBUMS_PERSIST_FILE_NAME);
         if( !"".equals(response)){
-            albums = JSONParser.parseAlbums(response);
-            sortAlbums();
-            updateAlbumList();
+            return JSONParser.parseAlbums(response);
         }else{
             Toast.makeText(context,"No local data avaialble",Toast.LENGTH_SHORT).show();
         }
+        return new ArrayList<Album>();
     }
-    private void sortAlbums(){
-        Collections.sort(albums, new Comparator<Album>() {
+
+    /**
+     * Sorts loaded albums by title
+     * @param albms
+     */
+    private void sortAlbums(List<Album> albms){
+        Collections.sort(albms, new Comparator<Album>() {
             @Override
             public int compare(Album album, Album t1) {
                 return album.title.compareTo(t1.title);
@@ -86,10 +95,10 @@ public class AlbumsViewModel  {
             @Override
             public void onResponse(String response) {
                 Util.dismissProgressDialog();
-                albums = JSONParser.parseAlbums(response);
                 Util.savePersistanceData(context, Constants.ALBUMS_PERSIST_FILE_NAME,response);
-                sortAlbums();
-                updateAlbumList();
+                List<Album> albms = JSONParser.parseAlbums(response);
+                albums.setValue(albms);
+
             }
         }, new Response.ErrorListener() {
             @Override

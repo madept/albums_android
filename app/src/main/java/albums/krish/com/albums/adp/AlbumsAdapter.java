@@ -10,6 +10,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import java.util.ArrayList;
+import java.util.List;
 
 
 import albums.krish.com.albums.R;
@@ -21,9 +22,9 @@ import albums.krish.com.albums.models.Album;
 
 public class AlbumsAdapter extends RecyclerView.Adapter<AlbumsAdapter.AlbumsViewHolder>  {
 
-    ArrayList<Album> albumList;
+    List<Album> albumList;
     Context ctx;
-    public AlbumsAdapter(Context ctx, ArrayList<Album> albumlist) {
+    public AlbumsAdapter(Context ctx, List<Album> albumlist) {
         this.albumList = albumlist;
         //  this.sorting = sorting;
         this.ctx = ctx;
